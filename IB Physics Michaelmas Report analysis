@@ -1,0 +1,65 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+pathway="D:/Downloads2/Cam/IB Physics/Michaelmas report/MildSteel.txt"
+Vx=np.array(np.genfromtxt(pathway, usecols=0))
+Vy=np.array(np.genfromtxt(pathway, usecols=1))
+#add scaling from vx and Vy to H and B
+np_turns=400
+ns=500
+Rp=2
+Lp=4.2e-2
+Ri=1.4732e3
+C=452.9e-9
+As_air=2.809e-5
+As_MildSteel=7.79e-6
+As_TransformerIron=2.97e-6
+As_NiCu=19.60e-6
+H=Vx*np_turns/(Lp*Rp)
+B=(Vy*Ri*C) / (ns*As_MildSteel)
+#removing offset and scaling
+yoffset=(np.max(B)+np.min(B))/2
+xoffset=(np.max(H)+np.min(H))/2
+H=H-xoffset
+B=B-yoffset
+
+fig, ax = plt.subplots()
+ax.plot(H, B)
+
+# Manually set spines to show axes
+ax.spines['left'].set_position('zero')
+ax.spines['bottom'].set_position('zero')
+ax.spines['right'].set_color('none')
+ax.spines['top'].set_color('none')
+plt.title('B-H Hysteresis')
+ax.set_xlabel('H/Am\u207b\u00b9')
+ax.set_ylabel('B/T')
+ax.yaxis.label.set_rotation(0)
+ax.xaxis.set_label_coords(1.06, 0.5)
+ax.yaxis.set_label_coords(0.53, 0.95)
+plt.savefig('Hysteresis general', dpi=300)
+plt.show()
+area=0
+for i in range(len(H)-1):
+  area+=(H[i+1]-H[i])*0.5*(B[i+1]+B[i])
+print(abs(area)*50)
+Coercive_field=[]
+for i in range(len(H)):
+  if np.isclose(B[i],0,atol=0.0001):
+    Coercive_field.append(abs(H[i]))
+print(np.mean(Coercive_field))
+Remnant_Magnetisation=[]
+for i in range(len(H)):
+  if np.isclose(H[i],0,atol=0.01*np_turns/(Lp*Rp)):  
+    Remnant_Magnetisation.append(abs(B[i]))
+print(np.mean(Remnant_Magnetisation))
+print(np.max(B))
+gradient=[]
+for i in range(len(H) - 50):
+    denominator = H[i + 50] - H[i]
+    if np.isclose(denominator, 0, atol=1e-10):
+        gradient.append(np.nan)
+    else:
+        gradient.append(abs((B[i + 50] - B[i]) / denominator))
+
+print(np.nanmin(gradient), '-', np.nanmax(gradient)/(4*np.pi*1e-7))
